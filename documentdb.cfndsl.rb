@@ -66,21 +66,33 @@ CloudFormation do
     Tags([{ Key: 'Name', Value: FnSub("${EnvironmentName}-#{component_name}-cluster")}] + tags)
   }
 
+  family = external_parameters.fetch(:family,'docdb3.6')
+
   if defined?(cluster_parameters)
     DocDB_DBClusterParameterGroup(:DocDBClusterParameterGroup) {
       Description "Parameter group for the #{component_name} cluster"
-      Family 'docdb3.6'
+      Family family
       Name FnSub("${EnvironmentName}-#{component_name}-cluster-parameter-group")
       Parameters cluster_parameters
       Tags [{ Key: 'Name', Value: FnSub("${EnvironmentName}-#{component_name}-cluster-parameter-group")}] + tags
     }
   end
-
+  
   DocDB_DBInstance(:DocDBInstanceA) {
     DBClusterIdentifier Ref(:DocDBCluster)
     DBInstanceClass Ref('InstanceType')
     Tags([{ Key: 'Name', Value: FnSub("${EnvironmentName}-#{component_name}-instance-A")}] + tags)
   }
+
+
+  replicas = external_parameters.fetch(:replicas, 1)
+  replicas.times do | replica|
+    DocDB_DBInstance(:DocDBInstanceReplica) {
+      DBClusterIdentifier Ref(:DocDBCluster)
+      DBInstanceClass Ref('InstanceType')
+      Tags([{ Key: 'Name', Value: FnSub("${EnvironmentName}-#{component_name}-instance")}] + tags)
+    }
+  end
 
   Route53_RecordSet(:DBHostRecord) {
     HostedZoneName FnJoin('', [ Ref('EnvironmentName'), '.', Ref('DnsDomain'), '.'])
