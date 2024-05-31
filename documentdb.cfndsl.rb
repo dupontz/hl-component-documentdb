@@ -85,7 +85,7 @@ CloudFormation do
   }
 
 
-  replicas = external_parameters.fetch(:replicas, 1)
+  replicas = external_parameters.fetch(:replicas, 0)
   replicas.times do | replica|
     DocDB_DBInstance(:DocDBInstanceReplica) {
       DBClusterIdentifier Ref(:DocDBCluster)
