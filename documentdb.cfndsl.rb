@@ -84,14 +84,12 @@ CloudFormation do
     Tags([{ Key: 'Name', Value: FnSub("${EnvironmentName}-#{component_name}-instance-A")}] + tags)
   }
 
-  if defined?(replicas)
-    replicas.times do | replica|
-      DocDB_DBInstance(:DocDBInstanceReplica) {
-        DBClusterIdentifier Ref(:DocDBCluster)
-        DBInstanceClass Ref('InstanceType')
-        Tags([{ Key: 'Name', Value: FnSub("${EnvironmentName}-#{component_name}-instance")}] + tags)
-      }
-    end
+  if defined?(replica_enabled)
+    DocDB_DBInstance(:DocDBInstanceReplica) {
+      DBClusterIdentifier Ref(:DocDBCluster)
+      DBInstanceClass Ref('InstanceType')
+      Tags([{ Key: 'Name', Value: FnSub("${EnvironmentName}-#{component_name}-instance")}] + tags)
+    }
   end
 
   Route53_RecordSet(:DBHostRecord) {
