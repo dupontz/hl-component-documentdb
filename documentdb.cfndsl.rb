@@ -6,6 +6,10 @@ CloudFormation do
   tags = []
   extra_tags.each { |key,value| tags << { Key: FnSub(key), Value: FnSub(value) } } if defined? extra_tags
 
+  documentdb_tags << { Key: 'Name', Value: FnSub("${EnvironmentName}-#{external_parameters[:component_name]}") }
+  documentdb_tags << { Key: 'Environment', Value: Ref(:EnvironmentName) }
+  documentdb_tags << { Key: 'EnvironmentType', Value: Ref(:EnvironmentType) }
+
   Resource("SSMSecureParameter") {
     # Condition 'SnapshotNotSet'
     Type "Custom::SSMSecureParameter"
@@ -46,7 +50,7 @@ CloudFormation do
       }
     ])
 
-    Tags redis_tags
+    Tags documentdb_tags
   }
 
   DocDB_DBSubnetGroup(:DocDBSubnetGroup) {
