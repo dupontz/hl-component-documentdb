@@ -35,7 +35,7 @@ CloudFormation do
   ip_blocks = external_parameters.fetch(:ip_blocks, {})
   security_group_rules = external_parameters.fetch(:security_group_rules, [])
 
-  EC2_SecurityGroup(:SecurityGroupRedis) {
+  EC2_SecurityGroup(:DocDBSecurityGroup) {
     VpcId Ref(:VPCId)
     GroupDescription FnSub("${EnvironmentName}-#{external_parameters[:component_name]}")
     
