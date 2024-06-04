@@ -27,21 +27,26 @@ CloudFormation do
     Value "#{master_credentials['username']}"
   }
 
-  security_group = external_parameters.fetch(:security_group, [])
-  ip_blocks = external_parameters.fetch(:ip_blocks, [])
+  ip_blocks = external_parameters.fetch(:ip_blocks, {})
+  security_group_rules = external_parameters.fetch(:security_group_rules, [])
 
-  EC2_SecurityGroup(:DocDBSecurityGroup) {
-    VpcId Ref('VPCId')
-    GroupDescription "DocumentDB communication"
-    SecurityGroupIngress sg_create_rules(security_group, ip_blocks) if (!security_group.empty? && !ip_blocks.empty?)
-    Tags([{ Key: 'Name', Value: FnSub("${EnvironmentName}-#{component_name}")}] + tags)
-    Metadata({
-      cfn_nag: {
-        rules_to_suppress: [
-          { id: 'F1000', reason: 'adding rules using cfn resources' }
-        ]
+  EC2_SecurityGroup(:SecurityGroupRedis) {
+    VpcId Ref(:VPCId)
+    GroupDescription FnSub("${EnvironmentName}-#{external_parameters[:component_name]}")
+    
+    if security_group_rules.any?
+      SecurityGroupIngress generate_security_group_rules(security_group_rules,ip_blocks)
+    end
+
+    SecurityGroupEgress([
+      {
+        CidrIp: '0.0.0.0/0',
+        Description: 'Outbound for all ports',
+        IpProtocol: '-1',
       }
-    })
+    ])
+
+    Tags redis_tags
   }
 
   DocDB_DBSubnetGroup(:DocDBSubnetGroup) {
